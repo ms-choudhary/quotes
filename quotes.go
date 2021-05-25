@@ -78,7 +78,7 @@ func randomHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	flag.Parse()
 
-	log.Print("starting server....")
+	log.Print("starting server...")
 	err := Init("postgres", *dbConnection)
 	if err != nil {
 		log.Fatal(err)
