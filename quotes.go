@@ -17,7 +17,7 @@ type Quote struct {
 	Tags   []string
 }
 
-var dbConnection = flag.String("db", "postgres://postgres@localhost/production?sslmode=disable", "postgres db connection string")
+var dbConnection = flag.String("db", "postgres://postgres@inst-juwcpfvrxydjkgptsanbzhlm-postgres-srv.dep-ns-inst-juwcpfvrxydjkgptsanbzhlm/production?sslmode=disable", "postgres db connection string")
 
 func healthcheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
