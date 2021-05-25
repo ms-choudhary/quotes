@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: quotes
+  name: quotes
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: quotes
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: quotes
+    spec:
+      containers:
+      - image: docker-registry.default.svc:5000/quotes/quotes:v0
+        imagePullPolicy: Always
+        name: quotes
+        args: ["--db", "postgres://postgres@postgres/production?sslmode=disable"]
+        resources: {}
+status: {}

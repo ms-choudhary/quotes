@@ -1,0 +1,50 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  creationTimestamp: null
+  name: quotes
+  namespace: quotes
+spec:
+  replicas: 1
+  selector:
+    app: quotes
+    deployment-config.name: quotes
+  strategy:
+    resources: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: quotes
+        deployment-config.name: quotes
+    spec:
+      containers:
+      - image: quotes/quotes:v0
+        name: default
+        args: ["--db", "postgres://postgres@postgres/production?sslmode=disable"]
+        resources:
+          limits:
+            cpu: 300m
+            memory: 100Mi
+          requests:
+            cpu: 300m
+            memory: 100Mi
+  test: false
+  triggers: null
+  triggers:
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+          - default
+        from:
+          kind: ImageStreamTag
+          namespace: quotes
+          name: 'quotes:v0'
+status:
+  availableReplicas: 0
+  latestVersion: 0
+  observedGeneration: 0
+  replicas: 0
+  unavailableReplicas: 0
+  updatedReplicas: 0

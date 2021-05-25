@@ -1,0 +1,21 @@
+kind: "BuildConfig"
+apiVersion: "build.openshift.io/v1"
+metadata:
+  name: "quotes" 
+spec:
+  triggers:
+    - type: github
+      github:
+        secret: gruelsome99
+  source: 
+    type: "Git"
+    git:
+      ref: main
+      uri: "https://github.com/ms-choudhary/quotes"
+  strategy: 
+    type: "Docker"
+    dockerStrategy: {}
+  output: 
+    to:
+      kind: "ImageStreamTag"
+      name: "quotes:v0"
