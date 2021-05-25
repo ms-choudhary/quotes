@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"math/rand"
 	"time"
 
@@ -10,6 +11,13 @@ import (
 )
 
 var db *sql.DB
+
+func Ping() {
+	if err := db.Ping(); err != nil {
+		log.Fatal("couldn't connect db")
+	}
+	log.Print("db connected.")
+}
 
 func Init(module, connectionStr string) error {
 	var err error

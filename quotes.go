@@ -78,11 +78,12 @@ func randomHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	flag.Parse()
 
-	log.Print("starting server...")
 	err := Init("postgres", *dbConnection)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	Ping()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", healthcheckHandler)
@@ -92,5 +93,6 @@ func main() {
 
 	http.Handle("/", r)
 
+	log.Print("starting server...")
 	log.Fatal(http.ListenAndServe(":9090", nil))
 }
