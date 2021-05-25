@@ -14,7 +14,7 @@ var db *sql.DB
 
 func Ping() {
 	if err := db.Ping(); err != nil {
-		log.Fatal("couldn't connect db")
+		log.Fatalf("couldn't connect db: %v", err)
 	}
 	log.Print("db connected.")
 }
