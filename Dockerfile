@@ -6,4 +6,4 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 COPY --from=build /go/bin/quotes /usr/bin/quotes
 EXPOSE 9090
-CMD ["quotes"]
+ENTRYPOINT ["quotes"]

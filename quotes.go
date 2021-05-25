@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,6 +16,8 @@ type Quote struct {
 	Author string
 	Tags   []string
 }
+
+var dbConnection = flag.String("db", "postgres://postgres@localhost/production?sslmode=disable", "postgres db connection string")
 
 func healthcheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -73,7 +76,9 @@ func randomHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	err := Init("postgres", "postgres://postgres@localhost/production?sslmode=disable")
+	flag.Parse()
+
+	err := Init("postgres", *dbConnection)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -85,5 +90,7 @@ func main() {
 	r.HandleFunc("/quotes/random", randomHandler).Methods("GET")
 
 	http.Handle("/", r)
+
+	log.Print("starting server...")
 	log.Fatal(http.ListenAndServe(":9090", nil))
 }
