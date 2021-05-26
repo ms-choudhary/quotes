@@ -8,20 +8,24 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/ms-choudhary/quotes/store"
 )
 
-type Quote struct {
-	ID     int
-	Text   string
-	Author string
-	Tags   []string
-}
+var (
+	dbConnection = flag.String("db", "postgres://postgres@inst-juwcpfvrxydjkgptsanbzhlm-postgres-srv.dep-ns-inst-juwcpfvrxydjkgptsanbzhlm/production?sslmode=disable", "postgres db connection string")
+)
 
-var dbConnection = flag.String("db", "postgres://postgres@inst-juwcpfvrxydjkgptsanbzhlm-postgres-srv.dep-ns-inst-juwcpfvrxydjkgptsanbzhlm/production?sslmode=disable", "postgres db connection string")
+var db store.DB
 
 func healthcheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "OK"})
+}
+
+func handleErr(w http.ResponseWriter, status int, errorMsg string, err error) {
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(map[string]string{"error": errorMsg})
+	log.Printf("%v: %v", errorMsg, err)
 }
 
 func createHandler(w http.ResponseWriter, r *http.Request) {
@@ -29,62 +33,72 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "failed to read request", http.StatusBadRequest)
-	}
-
-	var q Quote
-	if err := json.Unmarshal(body, &q); err != nil {
-		http.Error(w, "couldn't parse body", http.StatusUnprocessableEntity)
+		handleErr(w, http.StatusBadRequest, "failed to read request", err)
 		return
 	}
 
-	q, err = Create(q)
+	var q store.Quote
+	if err := json.Unmarshal(body, &q); err != nil {
+		handleErr(w, http.StatusBadRequest, "couldn't parse body", err)
+		return
+	}
+
+	q, err = db.Create(q)
 	if err != nil {
-		http.Error(w, "couldn't store quote", http.StatusInternalServerError)
+		handleErr(w, http.StatusInternalServerError, "couldn't store quote", err)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(q); err != nil {
-		http.Error(w, "couldn't write body", http.StatusInternalServerError)
+		log.Printf("couldn't write body: %v", err)
+		return
 	}
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	quotes, err := GetAll()
+	quotes, err := db.GetAll()
 	if err != nil {
-		http.Error(w, "couldn't read quotes", http.StatusInternalServerError)
+		handleErr(w, http.StatusInternalServerError, "couldn't read quotes", err)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(quotes); err != nil {
-		http.Error(w, "couldn't write body", http.StatusInternalServerError)
+		log.Printf("couldn't write body: %v", err)
+		return
 	}
 }
 
 func randomHandler(w http.ResponseWriter, r *http.Request) {
-	randQuote, err := GetRandom()
+	randQuote, err := db.GetRandom()
 	if err != nil {
-		http.Error(w, "couldn't read quotes", http.StatusInternalServerError)
+		handleErr(w, http.StatusInternalServerError, "couldn't read quotes", err)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(randQuote); err != nil {
-		http.Error(w, "couldn't write body", http.StatusInternalServerError)
+		log.Printf("couldn't write body: %v", err)
+		return
 	}
 }
 
 func main() {
 	flag.Parse()
 
-	log.Printf("connecting db %v...", *dbConnection)
-	err := Init("postgres", *dbConnection)
+	var err error
+	log.Printf("init db %v...", *dbConnection)
+	db, err = store.NewPostgresStore(*dbConnection)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	Ping()
+	if err := db.Ping(); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Print("db connected.")
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", healthcheckHandler)
