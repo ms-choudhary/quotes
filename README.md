@@ -1,2 +1,2 @@
 # quotes
-Quotes as a service
+Quotes as a service.
